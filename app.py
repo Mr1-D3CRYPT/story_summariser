@@ -1,0 +1,57 @@
+import streamlit as st
+import spacy
+from spacy.lang.en.stop_words import STOP_WORDS
+from string import punctuation
+from heapq import nlargest
+
+# Load the spacy model
+nlp = spacy.load('en_core_web_sm')
+
+# Define a function for summarizing text
+def summarize(text):
+    doc = nlp(text)
+    tokens = [token.text for token in doc]
+
+    word_frequencies = {}
+    for word in doc:
+        if word.text.lower() not in STOP_WORDS and word.text.lower() not in punctuation:
+            if word.text not in word_frequencies.keys():
+                word_frequencies[word.text] = 1
+            else:
+                word_frequencies[word.text] += 1
+
+    max_frequency = max(word_frequencies.values())
+    for word in word_frequencies.keys():
+        word_frequencies[word] = word_frequencies[word] / max_frequency
+
+    sentence_tokens = [sent for sent in doc.sents]
+    sentence_scores = {}
+    for sent in sentence_tokens:
+        for word in sent:
+            if word.text.lower() in word_frequencies.keys():
+                if sent not in sentence_scores.keys():
+                    sentence_scores[sent] = word_frequencies[word.text.lower()]
+                else:
+                    sentence_scores[sent] += word_frequencies[word.text.lower()]
+
+    select_length = int(len(sentence_tokens) * 0.3)
+    summary = nlargest(select_length, sentence_scores, key=sentence_scores.get)
+    final_summary = [sent.text for sent in summary]
+    summary = ' '.join(final_summary)
+    return summary
+
+# Define the Streamlit app
+st.title("Story Summarizer")
+
+# Input story with a larger text area
+story = st.text_area("Enter the story text here:", height=300)
+
+# Summarize the story
+if st.button("Summarize Story"):
+    if story.strip():
+        # Generate summary
+        summary = summarize(story)
+        st.write("**Summary:**")
+        st.text(summary)
+    else:
+        st.write("Please enter a story to get a summary.")
