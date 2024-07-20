@@ -1,20 +1,11 @@
 import streamlit as st
 import spacy
-from spacy.cli import download
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 from heapq import nlargest
 
-# Download and load the spaCy model
-def load_spacy_model():
-    try:
-        nlp = spacy.load('en_core_web_sm')
-    except OSError:
-        download('en_core_web_sm')
-        nlp = spacy.load('en_core_web_sm')
-    return nlp
-
-nlp = load_spacy_model()
+# Load the spaCy model
+nlp = spacy.load('en_core_web_sm')
 
 # Define a function for summarizing text
 def summarize(text):
